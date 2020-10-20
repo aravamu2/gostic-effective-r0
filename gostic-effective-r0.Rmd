@@ -1,0 +1,42 @@
+---
+title: "Gostic Effective R0"
+author: "Srikanth Aravamuthan"
+date: "10/18/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(lubridate)
+library(mgcv)
+
+```
+
+```{r}
+df <- read.csv("https://opendata.arcgis.com/datasets/5374188992374b318d3e2305216ee413_12.csv", fileEncoding="UTF-8-BOM") %>% 
+  rename_all(tolower) %>% 
+  select(name:test_new) %>% 
+  mutate(date = ymd_hms(date)) %>% 
+  mutate_if(is.numeric, ~replace(., is.na(.), 0)) %>% 
+  group_by(name) %>% 
+  arrange(desc(date)) %>% 
+  mutate(positive = cummin(positive),
+         negative = cummin(negative),
+         deaths = cummin(deaths)) %>% 
+  arrange(date) %>% 
+  mutate(pos_new = positive - lag(positive, 1, 0),
+         neg_new = negative - lag(negative, 1, 0),
+         dth_new = deaths - lag(deaths, 1, 0)) %>% 
+  mutate(tests = positive + negative,
+         test_new = pos_new + neg_new,
+         pos_rate = pos_new / test_new) %>% 
+  mutate(pos_rate = if_else(is.nan(pos_rate), (lead(pos_rate, 1, 0) + lag(pos_rate, 1, 0)) / 2, pos_rate)) %>% 
+  mutate_at(vars(pos_rate), ~replace(., is.nan(.), 0)) %>% 
+  nest() %>% 
+  mutate(pos_rate_gam = map(data, function(df) fitted(gam(pos_rate ~ s(as.numeric(date)), data = df, family = "quasipoisson")))) %>% 
+  unnest(cols = c(data, pos_rate_gam)) %>% 
+  mutate(case = pos_new * sqrt(pos_rate_gam))
+
+```
+
