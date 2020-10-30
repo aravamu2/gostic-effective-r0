@@ -38,7 +38,7 @@ df <- read.csv("https://opendata.arcgis.com/datasets/5374188992374b318d3e2305216
   mutate(pos_rate_gam = map(data, function(df) fitted(gam(pos_rate ~ s(as.numeric(date)), data = df, family = "quasibinomial", weights = test_new)))) %>%
   unnest(cols = c(data, pos_rate_gam)) %>% 
   group_by(date) %>% 
-  mutate(case = pos_new * (pos_rate_gam/min(pos_rate_gam, na.rm = TRUE))^0.1) %>% 
+  mutate(case = pos_new * (pos_rate_gam/quantile(pos_rate_gam, probs = 0.025, na.rm = TRUE))^0.1) %>% 
   ungroup()
 
 ```
