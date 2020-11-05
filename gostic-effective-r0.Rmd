@@ -43,3 +43,50 @@ df <- read.csv("https://opendata.arcgis.com/datasets/5374188992374b318d3e2305216
 
 ```
 
+```{r}
+library(EpiNow2)
+library(future)
+future::plan("multiprocess", gc = TRUE, earlySignal = TRUE, workers = 7)
+
+```
+
+```{r}
+reporting_delay <- EpiNow2::bootstrapped_dist_fit(rlnorm(100, log(6), 1))
+reporting_delay$max <- 30
+generation_time <- list(mean = EpiNow2::covid_generation_times[1, ]$mean,
+                        mean_sd = EpiNow2::covid_generation_times[1, ]$mean_sd,
+                        sd = EpiNow2::covid_generation_times[1, ]$sd,
+                        sd_sd = EpiNow2::covid_generation_times[1, ]$sd_sd,
+                        max = 30)
+  
+incubation_period <- list(mean = EpiNow2::covid_incubation_period[1, ]$mean,
+                          mean_sd = EpiNow2::covid_incubation_period[1, ]$mean_sd,
+                          sd = EpiNow2::covid_incubation_period[1, ]$sd,
+                          sd_sd = EpiNow2::covid_incubation_period[1, ]$sd_sd,
+                          max = 30)
+
+```
+
+```{r}
+df.master <- df %>% 
+  group_by(name) %>% 
+  select(date, case) %>%
+  transmute(date = as.Date(date),
+            confirm = round(case)) %>% 
+  nest() %>% 
+  mutate(
+    estimate = list(
+      EpiNow2::epinow(
+        reported_cases = as.data.frame(data),
+        generation_time = generation_time,
+        delays = list(incubation_period, reporting_delay),
+        horizon = 7, samples = 1000, warmup = 200, 
+        cores = 8, chains = 2, verbose = TRUE, 
+        adapt_delta = 0.95
+      )$plots$summary$data
+    )
+  ) %>% 
+  select(-data) %>% 
+  unnest(estimate)
+
+```
