@@ -1,3 +1,19 @@
+# Condor STDOUT, STDERR and logs
+queue/err/
+queue/out/
+queue/log/
+
+# emacs tmp files
+\#*
+*~
+
+# dirs and files for messing around
+data/
+tmp/
+test/
+?
+??
+
 # History files
 .Rhistory
 .Rapp.history
