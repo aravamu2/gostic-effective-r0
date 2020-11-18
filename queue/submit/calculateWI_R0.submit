@@ -1,0 +1,43 @@
+### condor_submit -append CPUS=2 -append CHAINS=2 ..
+universe = docker
+
+epiVersion = 1.0.0
+epiTag     = github
+docker_image = steveg53703/epinow2:$(epiTag).$(epiVersion)_noAVX2
+
+executable = Rscript
+transfer_executable = false
++WantFlocking = TRUE
+
+## enforce execute node architecture compatibility with docker image
+Requirements = (Has_sse4_2 =?= true)  
+
+TMP = $(PROCESS) + 1
+
+countyIndex = $INT(TMP)
+DATE = 2020-11-12
+INFILE = data/WI_$(DATE).csv
+OUTFILE = R0.$(DATE).$(CLUSTER).$(PROCESS).csv
+
+args = --vanilla calculateR0.R  -inFile $BASENAME(INFILE) -outFile $(OUTFILE) -chains $(CHAINS) -cores $(CPUS) -countyIndex $(countyIndex) -samples 35 -warmup 10
+
+transfer_input_files = bin/calculateR0.R, $(INFILE)
+transfer_output_remaps = "$(OUTFILE) = outdir/$(OUTFILE)"
+
+output    = queue/out/R0.$(CLUSTER).$(PROCESS).out
+error  = queue/err/R0.$(CLUSTER).$(PROCESS).err
+log    = queue/log/R0.$(CLUSTER).log
+
+## defaults  (override with -append on the cmd line.)
+#CHAINS = 2
+#CPUS = 2
+CHAINS = 1
+CPUS = 1
+
+request_memory = 10 GB
+request_disk  =  1 GB
+request_cpus  = $(CPUS)
+request_gpus = isUndefined(TotalGpus) ? 0 : 1  ## to avoid eviction on researcher gpu nodes
+
+#queue 72
+queue 3
