@@ -5,7 +5,10 @@ library(janitor)
 library(mgcv)
 library(zoo)
 
-df <- read.csv(", fileEncoding="UTF-8-BOM", stringsAsFactors = FALSE) %>% 
+inFile <- "data/WI_2020-11-12.csv"
+outFile <- "results/2020-11-17/out.csv" 
+
+df <- read.csv(inFile, fileEncoding="UTF-8-BOM", stringsAsFactors = FALSE) %>% 
   clean_names() %>% 
   select(name:test_new) %>% 
   mutate(date = ymd_hms(date)) %>% 
@@ -30,16 +33,12 @@ df <- read.csv(", fileEncoding="UTF-8-BOM", stringsAsFactors = FALSE) %>%
   mutate(case = pos_new * (pos_rate_gam/quantile(pos_rate_gam, probs = 0.025, na.rm = TRUE))^0.1) %>% 
   ungroup()
 
-```
-
-```{r}
+## block 2
 library(EpiNow2)
 library(future)
 future::plan("multiprocess", gc = TRUE, earlySignal = TRUE, workers = 7)
 
-```
-
-```{r}
+## block 3
 reporting_delay <- EpiNow2::bootstrapped_dist_fit(rlnorm(100, log(6), 1))
 reporting_delay$max <- 30
 generation_time <- list(mean = EpiNow2::covid_generation_times[1, ]$mean,
@@ -53,10 +52,7 @@ incubation_period <- list(mean = EpiNow2::covid_incubation_period[1, ]$mean,
                           sd = EpiNow2::covid_incubation_period[1, ]$sd,
                           sd_sd = EpiNow2::covid_incubation_period[1, ]$sd_sd,
                           max = 30)
-
-```
-
-```{r}
+## block 4
 df.master <- df %>% 
   group_by(name) %>% 
   select(date, case) %>%
@@ -78,4 +74,4 @@ df.master <- df %>%
   select(-data) %>% 
   unnest(estimate)
 
-```
+write.csv(df.master, outFile, row.names = FALSE, quote = FALSE)

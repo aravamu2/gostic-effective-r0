@@ -4,6 +4,8 @@ library(janitor)
 library(mgcv)
 library(zoo)
 
+outFile <- "data/processed/WI_2020-11-17.csv"
+
 df <- read.csv("https://opendata.arcgis.com/datasets/5374188992374b318d3e2305216ee413_12.csv", fileEncoding="UTF-8-BOM", stringsAsFactors = FALSE) %>% 
   clean_names() %>% 
   select(name:test_new) %>% 
@@ -29,4 +31,4 @@ df <- read.csv("https://opendata.arcgis.com/datasets/5374188992374b318d3e2305216
   mutate(case = pos_new * (pos_rate_gam/quantile(pos_rate_gam, probs = 0.025, na.rm = TRUE))^0.1) %>% 
   ungroup()
 
-  write.csv(df, "out.csv", row.names = FALSE, quote = FALSE)
+write.csv(df, outFile, row.names = FALSE, quote = FALSE)
