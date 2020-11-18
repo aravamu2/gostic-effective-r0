@@ -7,10 +7,16 @@ library(zoo)
 
 inFile <- "data/WI_2020-11-12.csv"
 outFile <- "results/2020-11-17/out.csv" 
+county <- "Dane"
 
 df <- read.csv(inFile, fileEncoding="UTF-8-BOM", stringsAsFactors = FALSE) %>% 
   clean_names() %>% 
-  select(name:test_new) %>% 
+    select(name:test_new)
+
+counties <- unique(df$name)
+
+df <- df %>%
+  filter(name == county) %>%
   mutate(date = ymd_hms(date)) %>% 
   group_by(name) %>% 
   arrange(desc(date)) %>% 
