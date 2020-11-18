@@ -1,0 +1,2 @@
+## filter the data pulled on 2020-11-12 to match pull from 2020-10-18 
+cat data/WI_2020-11-12.csv |perl -F, -nale '($date = $F[1]) =~ s/\s.*$//; ($mon,$day) = $date =~ /2020-(\d\d)-(\d\d)/; next if ($mon > 10); if ($mon == 10) {next if ($day > 16)}; print ' > data/processed/WI_2020-10-18.csv

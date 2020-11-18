@@ -15,8 +15,8 @@ Requirements = (Has_sse4_2 =?= true)
 TMP = $(PROCESS) + 1
 
 countyIndex = $INT(TMP)
-DATE = 2020-11-12
-INFILE = data/WI_$(DATE).csv
+DATE = 2020-10-18
+INFILE = data/processed/WI_$(DATE).csv
 OUTFILE = R0.$(DATE).$(CLUSTER).$(PROCESS).csv
 
 args = --vanilla calculateR0.R  -inFile $BASENAME(INFILE) -outFile $(OUTFILE) -chains $(CHAINS) -cores $(CPUS) -countyIndex $(countyIndex) -samples 35 -warmup 10
@@ -37,7 +37,9 @@ CPUS = 1
 request_memory = 10 GB
 request_disk  =  1 GB
 request_cpus  = $(CPUS)
-request_gpus = isUndefined(TotalGpus) ? 0 : 1  ## to avoid eviction on researcher gpu nodes
+## avoid eviction on researcher gpu nodes
+request_gpus = isUndefined(TotalGpus) ? 0 : 1  
 
 #queue 72
 queue 3
+
