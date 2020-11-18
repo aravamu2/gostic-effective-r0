@@ -7,10 +7,12 @@ queue/log/
 \#*
 *~
 
-# dirs and files for messing around
+# dirs and files for data,results, and messing around
 data/
+results/
 tmp/
 test/
+
 ?
 ??
 

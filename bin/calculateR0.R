@@ -4,17 +4,42 @@ library(lubridate)
 library(janitor)
 library(mgcv)
 library(zoo)
+library(EpiNow2)
+library(future)
 
-inFile <- "data/WI_2020-11-12.csv"
-outFile <- "results/2020-11-17/out.csv" 
-county <- "Dane"
+defaultArgs <- list (
+    inFile = "data/WI_2020-11-12.csv",
+    countyIndex = 1,
+    countyName = NULL,
 
-df <- read.csv(inFile, fileEncoding="UTF-8-BOM", stringsAsFactors = FALSE) %>% 
+    ## knobs for optimizing execution
+    samples = 1000,
+    warmup = 200, 
+    cores = 2,
+    chains = 2,
+
+    outFile = "results/2020-11-17/out.csv"  
+)
+
+args <- R.utils::commandArgs(trailingOnly = TRUE,
+                             asValues = TRUE ,
+                             defaults = defaultArgs)
+
+## read data   -----------
+df <- read.csv(args$inFile, fileEncoding="UTF-8-BOM", stringsAsFactors = FALSE) %>% 
   clean_names() %>% 
     select(name:test_new)
 
+## select county of interest  ---------
 counties <- unique(df$name)
+if (!is.null(args$countyName)) {
+   county <- args$countyName
+} else {
+  county <- counties[as.numeric(args$countyIndex)]
+}
 
+## transform case counts ----------
+##   using smoothed positivity 
 df <- df %>%
   filter(name == county) %>%
   mutate(date = ymd_hms(date)) %>% 
@@ -39,12 +64,9 @@ df <- df %>%
   mutate(case = pos_new * (pos_rate_gam/quantile(pos_rate_gam, probs = 0.025, na.rm = TRUE))^0.1) %>% 
   ungroup()
 
-## block 2
-library(EpiNow2)
-library(future)
+## set up for EpiNow2 -----------------
 future::plan("multiprocess", gc = TRUE, earlySignal = TRUE, workers = 7)
 
-## block 3
 reporting_delay <- EpiNow2::bootstrapped_dist_fit(rlnorm(100, log(6), 1))
 reporting_delay$max <- 30
 generation_time <- list(mean = EpiNow2::covid_generation_times[1, ]$mean,
@@ -58,7 +80,9 @@ incubation_period <- list(mean = EpiNow2::covid_incubation_period[1, ]$mean,
                           sd = EpiNow2::covid_incubation_period[1, ]$sd,
                           sd_sd = EpiNow2::covid_incubation_period[1, ]$sd_sd,
                           max = 30)
-## block 4
+## estimate R_eff
+
+
 df.master <- df %>% 
   group_by(name) %>% 
   select(date, case) %>%
@@ -71,8 +95,12 @@ df.master <- df %>%
         reported_cases = as.data.frame(data),
         generation_time = generation_time,
         delays = list(incubation_period, reporting_delay),
-        horizon = 7, samples = 1000, warmup = 200, 
-        cores = 8, chains = 2, verbose = TRUE, 
+        horizon = 7,
+        samples = as.numeric(args$samples),
+        warmup = as.numeric(args$warmup),
+        cores = as.numeric(args$cores),
+        chains = as.numeric(args$chain),
+        verbose = TRUE, 
         adapt_delta = 0.95
       )$plots$summary$data
     )
@@ -80,4 +108,5 @@ df.master <- df %>%
   select(-data) %>% 
   unnest(estimate)
 
-write.csv(df.master, outFile, row.names = FALSE, quote = FALSE)
+write.csv(df.master, args$outFile, row.names = FALSE, quote = FALSE)
+q()
