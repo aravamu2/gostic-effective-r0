@@ -32,7 +32,7 @@ log    = queue/log/R0.$(CLUSTER).log
 CHAINS = 2
 CPUS = 2
 
-request_memory = 10 GB
+request_memory = 3 GB
 request_disk  =  1 GB
 request_cpus  = $(CPUS)
 ## avoid eviction on researcher gpu nodes
