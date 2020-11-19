@@ -1,7 +1,5 @@
 # Condor STDOUT, STDERR and logs
-queue/err/
-queue/out/
-queue/log/
+queue/???/
 docker_std*
 
 # emacs tmp files
