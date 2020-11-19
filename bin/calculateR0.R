@@ -8,7 +8,7 @@ library(EpiNow2)
 library(future)
 
 defaultArgs <- list (
-    inFile = "data/WI_2020-11-12.csv",
+    inFile = "data/processed/WI_2020-11-17.csv",
     countyIndex = 1,
     countyName = NULL,
 
