@@ -21,11 +21,12 @@ formatWIData <- function(df) {
         select(name:test_new) %>% 
         mutate(date = ymd_hms(date)) %>% 
         group_by(name) %>% 
-        arrange(desc(date)) %>%
 
         # enforce monotonicity  
+        arrange(desc(date)) %>%
         mutate(positive = cummin(positive),
                negative = cummin(negative),
+               #tests = positive + negative,
                deaths = cummin(deaths)) %>% 
         arrange(date) %>% 
 
@@ -68,12 +69,18 @@ fetchNYData <- function(rawData) {
 
 formatNYData <- function(df) {
     df <- df %>% 
+        clean_names() %>%  
         mutate(tests = as.numeric(cumulative_number_of_tests),
                positive = as.numeric(cumulative_number_of_positives)) %>% 
-        clean_names() %>%  
         mutate(date = as.Date(ymd_hms(test_date))) %>% 
         rename(name = county) %>%
-        group_by(name) %>% 
+        group_by(name) %>%
+
+        # enforce monotonicity  
+        arrange(desc(date)) %>%
+        mutate(positive = cummin(positive),
+               tests = cummin(tests)) %>%
+
         arrange(date) %>% 
         mutate(pos_new = positive - lag(positive, 1, 0)) %>% 
         mutate(test_new = tests - lag(tests, 1, 0),
@@ -87,6 +94,7 @@ formatNYData <- function(df) {
         mutate(case = pos_new * (pos_rate_gam/quantile(pos_rate_gam, probs = 0.025, na.rm = TRUE))^0.1) %>% 
         ungroup()
 
+    return(df)
 } ## formatNYData
 
 
