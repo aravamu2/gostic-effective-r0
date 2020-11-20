@@ -50,13 +50,66 @@ formatWIData <- function(df) {
     return(df)
 }  ## formatWIData
 
+
+########################
+fetchNYData <- function(rawData) {
+
+    df <- GET("https://health.data.ny.gov/resource/xdss-u53e.json?$limit=5000000")
+    df <- content(df, as = "text") #JSON response structured into raw data
+    df <- fromJSON(df)
+    df <- as.data.frame(df)
+    ## archive data pull
+    if (!is.null(rawData)) {
+        saveRDS(df, rawData)
+    }
+
+    return(df)
+}  ## fetchNYData
+
+formatNYData <- function(df) {
+    df <- df %>% 
+        mutate(cumulative_number_of_tests = as.numeric(cumulative_number_of_tests),
+               cumulative_number_of_positives = as.numeric(cumulative_number_of_positives)) %>% 
+        clean_names() %>%  
+        mutate(date = as.Date(ymd_hms(test_date))) %>% 
+        rename(name = county) %>%
+        group_by(name) %>% 
+        arrange(date) %>% 
+        mutate(pos_new = cumulative_number_of_positives - lag(cumulative_number_of_positives, 1, 0)) %>% 
+        mutate(tests = cumulative_number_of_tests,
+               test_new = tests - lag(tests, 1, 0),
+               test_new = na.fill(test_new, "extend"),
+               pos_rate = pos_new / test_new,
+               pos_rate = na.fill(pos_rate, "extend")) %>% 
+        nest() %>% 
+        mutate(pos_rate_gam = map(data, function(df) fitted(gam(pos_rate ~ s(as.numeric(date)), data = df, family = "quasibinomial", weights = test_new)))) %>%
+        unnest(cols = c(data, pos_rate_gam)) %>% 
+        group_by(date) %>% 
+        mutate(case = pos_new * (pos_rate_gam/quantile(pos_rate_gam, probs = 0.025, na.rm = TRUE))^0.1) %>% 
+        ungroup()
+
+} ## formatNYData
+
+
+    #%>% mutate( confirm = case ) %>%
+    #    mutate(confirm = round(confirm) ) %>% 
+    #    select(name,date,confirm)
+
+#####
 pullData <- function(state,rawData = NULL) {
     if (state == "WI") {
         df_raw <- fetchWIData(rawData)
         df <- formatWIData(df_raw)
         return(df)
     }
+
+    if (state == "NY") {
+        df_raw <- fetchNYData(rawData)
+        df <- formatNYData(df_raw)
+        return(df)
+    }
+
+
+        
 }
         
-
-    
