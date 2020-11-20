@@ -40,7 +40,10 @@ df <- df %>%
   filter(name == county)
 
 ## priors for EpiNow2 -----------------
-future::plan("multiprocess", gc = TRUE, earlySignal = TRUE, workers = 7)
+chains <- as.numeric(args$chains)
+cores <- as.numeric(args$cores)
+
+future::plan("multiprocess", gc = TRUE, earlySignal = TRUE, workers = chains)
 
 reporting_delay <- EpiNow2::bootstrapped_dist_fit(rlnorm(100, log(6), 1))
 reporting_delay$max <- 30
@@ -72,8 +75,8 @@ df.master <- df %>%
         horizon = 7,
         samples = as.numeric(args$samples),
         warmup = as.numeric(args$warmup),
-        cores = as.numeric(args$cores),
-        chains = as.numeric(args$chain),
+        cores = cores,
+        chains = chains,
         verbose = TRUE, 
         adapt_delta = 0.95
       )$plots$summary$data
