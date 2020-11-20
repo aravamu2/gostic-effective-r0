@@ -79,14 +79,18 @@ formatNYData <- function(df) {
         # enforce monotonicity  
         arrange(desc(date)) %>%
         mutate(positive = cummin(positive),
-               tests = cummin(tests)) %>%
+               tests = cummin(tests),
+               negative = tests - positive) %>%
 
         arrange(date) %>% 
-        mutate(pos_new = positive - lag(positive, 1, 0)) %>% 
-        mutate(test_new = tests - lag(tests, 1, 0),
+    mutate(pos_new = positive - lag(positive, 1, 0)) %>%
+    mutate(neg_new = negative - lag(negative,1,0) ) %>%
+    mutate(#test_new = tests - lag(tests, 1, 0),
+        test_new = pos_new + neg_new,
                test_new = na.fill(test_new, "extend"),
                pos_rate = pos_new / test_new,
-               pos_rate = na.fill(pos_rate, "extend")) %>% 
+        pos_rate = na.fill(pos_rate, "extend")) %>%
+        select( -neg_new, -negative) %>%
         nest() %>% 
         mutate(pos_rate_gam = map(data, function(df) fitted(gam(pos_rate ~ s(as.numeric(date)), data = df, family = "quasibinomial", weights = test_new)))) %>%
         unnest(cols = c(data, pos_rate_gam)) %>% 
@@ -96,7 +100,6 @@ formatNYData <- function(df) {
 
     return(df)
 } ## formatNYData
-
 
 #####
 pullData <- function(state,rawData = NULL) {
