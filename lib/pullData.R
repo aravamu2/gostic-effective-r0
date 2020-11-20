@@ -25,17 +25,16 @@ formatWIData <- function(df) {
         # enforce monotonicity  
         arrange(desc(date)) %>%
         mutate(positive = cummin(positive),
-               negative = cummin(negative),
-               #tests = positive + negative,
-               deaths = cummin(deaths)) %>% 
+               negative = cummin(negative)) %>%
+               #deaths = cummin(deaths)) %>%
+        mutate(tests = positive + negative) %>%
         arrange(date) %>% 
 
     # smooth positive rate
     mutate(pos_new = positive - lag(positive, 1, 0),
-           neg_new = negative - lag(negative, 1, 0),
-           dth_new = deaths - lag(deaths, 1, 0)) %>% 
-    mutate(tests = positive + negative,
-           test_new = pos_new + neg_new,
+           neg_new = negative - lag(negative, 1, 0)) %>%
+    #mutate(dth_new = deaths - lag(deaths, 1, 0)) %>% 
+    mutate(test_new = pos_new + neg_new,
            test_new = na.fill(test_new, "extend"),
            pos_rate = pos_new / test_new,
            pos_rate = na.fill(pos_rate, "extend")) %>% 
@@ -46,7 +45,8 @@ formatWIData <- function(df) {
 
                                         # scale cases by positive rate
     mutate(case = pos_new * (pos_rate_gam/quantile(pos_rate_gam, probs = 0.025, na.rm = TRUE))^0.1) %>% 
-    ungroup()
+    ungroup()  %>%
+    select(-deaths, -dth_new,-dth_7dayavg)
 
     return(df)
 }  ## formatWIData
