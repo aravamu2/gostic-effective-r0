@@ -68,16 +68,15 @@ fetchNYData <- function(rawData) {
 
 formatNYData <- function(df) {
     df <- df %>% 
-        mutate(cumulative_number_of_tests = as.numeric(cumulative_number_of_tests),
-               cumulative_number_of_positives = as.numeric(cumulative_number_of_positives)) %>% 
+        mutate(tests = as.numeric(cumulative_number_of_tests),
+               positive = as.numeric(cumulative_number_of_positives)) %>% 
         clean_names() %>%  
         mutate(date = as.Date(ymd_hms(test_date))) %>% 
         rename(name = county) %>%
         group_by(name) %>% 
         arrange(date) %>% 
-        mutate(pos_new = cumulative_number_of_positives - lag(cumulative_number_of_positives, 1, 0)) %>% 
-        mutate(tests = cumulative_number_of_tests,
-               test_new = tests - lag(tests, 1, 0),
+        mutate(pos_new = positive - lag(positive, 1, 0)) %>% 
+        mutate(test_new = tests - lag(tests, 1, 0),
                test_new = na.fill(test_new, "extend"),
                pos_rate = pos_new / test_new,
                pos_rate = na.fill(pos_rate, "extend")) %>% 
@@ -90,10 +89,6 @@ formatNYData <- function(df) {
 
 } ## formatNYData
 
-
-    #%>% mutate( confirm = case ) %>%
-    #    mutate(confirm = round(confirm) ) %>% 
-    #    select(name,date,confirm)
 
 #####
 pullData <- function(state,rawData = NULL) {
