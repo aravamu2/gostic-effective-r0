@@ -25,9 +25,16 @@ args <- R.utils::commandArgs(trailingOnly = TRUE,
 ## fetch the data and format it
 raw <- readRDS(args$inFile)
 if (args$state == "NY") {
-   df <- formatNYData(raw,beginDate,endDate)
+    df <- formatNYData(raw,
+                       as.Date(args$beginDate),
+                       as.Date(args$endDate)
+                       )
 } else if (args$state == "WI") {
-  df <- formatWIData(raw,beginDate,endDate)
+    df <- formatWIData(raw,
+                       as.Date(args$beginDate),
+                       as.Date(args$endDate)
+                       )
+
 }
 
 write.csv(df, args$outFile, row.names = FALSE, quote = FALSE)

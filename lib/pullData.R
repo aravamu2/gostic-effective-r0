@@ -60,7 +60,9 @@ formatWIData <- function(df,beginDate,endDate) {
         df %>%
         clean_names() %>% 
         select(name:test_new) %>% 
-        mutate(date = ymd_hms(date)) %>% 
+        mutate(date = ymd_hms(date))
+
+    df <- df %>%
         group_by(name) %>% 
         
         # enforce monotonicity  
@@ -79,7 +81,9 @@ formatNYData <- function(df,beginDate,endDate) {
         clean_names() %>%  
         mutate(tests = as.numeric(cumulative_number_of_tests),
                positive = as.numeric(cumulative_number_of_positives)) %>% 
-        mutate(date = as.Date(ymd_hms(test_date))) %>% 
+        mutate(date = as.Date(ymd_hms(test_date)))
+
+    df <-  df %>%
         rename(name = county) %>%
         group_by(name) %>%
         
