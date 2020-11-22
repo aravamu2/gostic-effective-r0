@@ -26,14 +26,15 @@ formatWIData <- function(df) {
         arrange(desc(date)) %>%
         mutate(positive = cummin(positive),
                negative = cummin(negative)) %>%
-               #deaths = cummin(deaths)) %>%
-        mutate(tests = positive + negative) %>%
-        arrange(date) %>% 
+        mutate(tests = positive + negative)
+
 
     # smooth positive rate
+    df <- df %>%
+        arrange(date) %>%
     mutate(pos_new = positive - lag(positive, 1, 0),
            neg_new = negative - lag(negative, 1, 0)) %>%
-    #mutate(dth_new = deaths - lag(deaths, 1, 0)) %>% 
+
     mutate(test_new = pos_new + neg_new,
            test_new = na.fill(test_new, "extend"),
            pos_rate = pos_new / test_new,
@@ -80,12 +81,15 @@ formatNYData <- function(df) {
         arrange(desc(date)) %>%
         mutate(positive = cummin(positive),
                tests = cummin(tests),
-               negative = tests - positive) %>%
+               negative = tests - positive)
 
-        arrange(date) %>% 
-    mutate(pos_new = positive - lag(positive, 1, 0)) %>%
-    mutate(neg_new = negative - lag(negative,1,0) ) %>%
-    mutate(#test_new = tests - lag(tests, 1, 0),
+    df <- df %>%
+            # smooth positive rate
+    arrange(date) %>%
+
+    mutate(pos_new = positive - lag(positive, 1, 0),
+           neg_new = negative - lag(negative,1,0) ) %>%
+    mutate(
         test_new = pos_new + neg_new,
                test_new = na.fill(test_new, "extend"),
                pos_rate = pos_new / test_new,
