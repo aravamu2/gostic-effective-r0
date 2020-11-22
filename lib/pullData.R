@@ -55,7 +55,7 @@ smoothByPosRate <- function(df) {
     return(df)
 }
 
-formatWIData <- function(df) {
+formatWIData <- function(df,beginDate,endDate) {
     df <-
         df %>%
         clean_names() %>% 
@@ -74,7 +74,7 @@ formatWIData <- function(df) {
 }  ## formatWIData
 
 
-formatNYData <- function(df) {
+formatNYData <- function(df,beginDate,endDate) {
     df <- df %>% 
         clean_names() %>%  
         mutate(tests = as.numeric(cumulative_number_of_tests),
@@ -92,16 +92,16 @@ formatNYData <- function(df) {
 } ## formatNYData
 
 #####
-pullData <- function(state,rawData = NULL) {
+pullData <- function(state,rawData = NULL,beginDate,endDate) {
     if (state == "WI") {
         df_raw <- fetchWIData(rawData)
-        df <- formatWIData(df_raw)
+        df <- formatWIData(df_raw,beginDate,endDate)
         return(df)
     }
     
     if (state == "NY") {
         df_raw <- fetchNYData(rawData)
-        df <- formatNYData(df_raw)
+        df <- formatNYData(df_raw,beginDate,endDate)
         return(df)
     }
     

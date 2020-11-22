@@ -13,6 +13,8 @@ defaultArgs <- list (
     rawData = NULL,        ### cache the data after downloading
     state = "WI",
     inFile = "test/input/wiFetch.rds",
+    beginDate = NULL,
+    endDate   = NULL,
     outFile = "test/output/wiPull.csv"
 )
 
@@ -23,9 +25,9 @@ args <- R.utils::commandArgs(trailingOnly = TRUE,
 ## fetch the data and format it
 raw <- readRDS(args$inFile)
 if (args$state == "NY") {
-   df <- formatNYData(raw)
+   df <- formatNYData(raw,beginDate,endDate)
 } else if (args$state == "WI") {
-  df <- formatWIData(raw)
+  df <- formatWIData(raw,beginDate,endDate)
 }
 
 write.csv(df, args$outFile, row.names = FALSE, quote = FALSE)
