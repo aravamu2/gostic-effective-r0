@@ -14,6 +14,30 @@ fetchWIData <- function(rawData) {
     return(df)
 }  ## fetchWIData
 
+testRateSmooth <- function(df) {
+
+        df <- df %>%
+            # smooth positive rate
+    arrange(date) %>%
+
+    mutate(pos_new = positive - lag(positive, 1, 0),
+           neg_new = negative - lag(negative,1,0) ) %>%
+    mutate(
+        test_new = pos_new + neg_new,
+               test_new = na.fill(test_new, "extend"),
+               pos_rate = pos_new / test_new,
+        pos_rate = na.fill(pos_rate, "extend")) %>%
+        select( -neg_new, -negative) %>%
+        nest() %>% 
+        mutate(pos_rate_gam = map(data, function(df) fitted(gam(pos_rate ~ s(as.numeric(date)), data = df, family = "quasibinomial", weights = test_new)))) %>%
+        unnest(cols = c(data, pos_rate_gam)) %>% 
+        group_by(date) %>% 
+        mutate(case = pos_new * (pos_rate_gam/quantile(pos_rate_gam, probs = 0.025, na.rm = TRUE))^0.1) %>% 
+        ungroup()
+
+    return(df)
+}
+
 formatWIData <- function(df) {
     df <-
         df %>%
@@ -26,8 +50,10 @@ formatWIData <- function(df) {
         arrange(desc(date)) %>%
         mutate(positive = cummin(positive),
                negative = cummin(negative)) %>%
-        mutate(tests = positive + negative)
+    mutate(tests = positive + negative) %>%
+    select(-deaths, -dth_new,-dth_7dayavg)
 
+    return(testRateSmooth(df))
 
     # smooth positive rate
     df <- df %>%
@@ -46,8 +72,8 @@ formatWIData <- function(df) {
 
                                         # scale cases by positive rate
     mutate(case = pos_new * (pos_rate_gam/quantile(pos_rate_gam, probs = 0.025, na.rm = TRUE))^0.1) %>% 
-    ungroup()  %>%
-    select(-deaths, -dth_new,-dth_7dayavg)
+    ungroup()
+
 
     return(df)
 }  ## formatWIData
@@ -82,6 +108,7 @@ formatNYData <- function(df) {
         mutate(positive = cummin(positive),
                tests = cummin(tests),
                negative = tests - positive)
+    return(testRateSmooth(df))
 
     df <- df %>%
             # smooth positive rate

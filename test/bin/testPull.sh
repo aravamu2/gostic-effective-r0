@@ -1,6 +1,6 @@
 #!/bin/bash
 
-testIndex=0
+testIndex=$1
 
 Rscript --vanilla test/bin/testPull.R           \
 	-state WI                               \
@@ -9,8 +9,6 @@ Rscript --vanilla test/bin/testPull.R           \
 	1> test/stdout/wiPull.$testIndex.out    \
 	2> test/stderr/wiPull.$testIndex.err    &
 
-
-testIndex=1
 
 Rscript --vanilla test/bin/testPull.R           \
 	-state NY                               \
