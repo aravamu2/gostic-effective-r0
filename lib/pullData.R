@@ -62,6 +62,15 @@ formatWIData <- function(df,beginDate,endDate) {
         select(name:test_new) %>% 
         mutate(date = ymd_hms(date))
 
+    if (!is.null(beginDate) {
+        df <- df %>%
+            filter(date >= beginDate)
+    }
+    if (!is.null(endDate) {
+        df <- df %>%
+            filter(date <= endDate)
+    }
+
     df <- df %>%
         group_by(name) %>% 
         
@@ -83,6 +92,16 @@ formatNYData <- function(df,beginDate,endDate) {
                positive = as.numeric(cumulative_number_of_positives)) %>% 
         mutate(date = as.Date(ymd_hms(test_date)))
 
+    if (!is.null(beginDate) {
+        df <- df %>%
+            filter(date >= beginDate)
+    }
+    if (!is.null(endDate) {
+        df <- df %>%
+            filter(date <= endDate)
+    }
+
+    
     df <-  df %>%
         rename(name = county) %>%
         group_by(name) %>%
