@@ -123,6 +123,16 @@ formatTXData <- function(dataList,beginDate,endDate) {
     remove(data_tests)
     remove(columns_real)
 
+    if (!is.null(beginDate)) {
+        df_TX <- df_TX %>%
+            filter(date >= beginDate)
+    }
+    if (!is.null(endDate)) {
+        df_TX <- df_TX %>%
+            ## include cases from before midnight of endDate
+            filter(date < endDate+1)
+    }
+
     df_TX <- df_TX %>% mutate(tests = as.numeric(tests),
                               confirm = as.numeric(confirm)) %>% 
         clean_names() %>%
