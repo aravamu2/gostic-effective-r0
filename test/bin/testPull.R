@@ -6,11 +6,11 @@ library(zoo)
 library(jsonlite) 
 library(httr)
 
+source("lib/pullTXData.R")
 source("lib/pullData.R")
 
 #### input arg
 defaultArgs <- list (
-    rawData = NULL,        ### cache the data after downloading
     state = "WI",
     inFile = "test/input/wiFetch.rds",
     beginDate = NULL,
@@ -24,21 +24,28 @@ args <- R.utils::commandArgs(trailingOnly = TRUE,
 
 ## fetch the data and format it
 raw <- readRDS(args$inFile)
+if (!is.null(args$beginDate)) {
+   args$beginDate <- as.Date(args$beginDate)
+}
+if (!is.null(args$endDate)) {
+   args$endDate <- as.Date(args$endDate)
+}
+
 if (args$state == "NY") {
     df <- formatNYData(raw,
-                       as.Date(args$beginDate),
-                       as.Date(args$endDate)
+                       args$beginDate,
+                       args$endDate
                        )
 } else if (args$state == "WI") {
     df <- formatWIData(raw,
-                       as.Date(args$beginDate),
-                       as.Date(args$endDate)
+                       args$beginDate,
+                       args$endDate
                        )
 
 } else if (args$state == "TX") {
     df <- formatTXData(raw,
-                       as.Date(args$beginDate),
-                       as.Date(args$endDate)
+                       args$beginDate,
+                       args$endDate
                        )
 
 }

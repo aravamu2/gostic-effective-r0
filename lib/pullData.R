@@ -29,7 +29,6 @@ fetchNYData <- function(rawData) {
     return(df)
 }  ## fetchNYData
 
-
 smoothByPosRate <- function(df) {
     
     df <- df %>%
@@ -53,7 +52,7 @@ smoothByPosRate <- function(df) {
         ungroup()
     
     return(df)
-}
+}  ## smooth
 
 formatWIData <- function(df,beginDate,endDate) {
     df <-
@@ -115,26 +114,43 @@ formatNYData <- function(df,beginDate,endDate) {
     return(smoothByPosRate(df))
 } ## formatNYData
 
+###############################################
+#        
+###############################################
+## fetch: download data files;  return data frame
+##    optional: write rds raw data file
+## format:  put data into consistent format; enforce monotonicity; Ellis smooth
 #####
-pullData <- function(state,rawData = NULL,beginDate,endDate) {
+##  pull = fetch+format
+
+fetchData <- function(state,rawData) {
     if (state == "WI") {
-        df_raw <- fetchWIData(rawData)
-        df <- formatWIData(df_raw,beginDate,endDate)
-        return(df)
-    }
-    
-    if (state == "NY") {
-        df_raw <- fetchNYData(rawData)
-        df <- formatNYData(df_raw,beginDate,endDate)
-        return(df)
+        return(fetchWIData(rawData))
+    } else if (state == "NY") {
+        return(fetchNYData(rawData))
+    } else if (state == "TX") {
+        return(fetchTXData(rawData))
     }
 
-    if (state == "TX") {
-        df_raw <- fetchTXData(rawData)
-        df <- formatTXData(df_raw,beginDate,endDate)
-        return(df)
+}  ## fetchData()
+
+formatData <- function(state,df_raw,beginDate, endDate) {
+
+    if (state == "WI") {
+        return(formatWIData(df_raw,beginData,endDate))
+    } else if (state == "NY") {
+        return(formatNYData(df_raw,beginData,endDate))
+    } else if (state == "TX") {
+        return(formatTXData(df_raw,beginData,endDate))
     }
 
+} ## formatData
+
+####cpull == fetch+format
+pullData <- function(state,rawData = NULL,beginDate,endDate) {
+    df_raw <- fetchData(state,rawData)
+    df <- formatData(state,df_raw,beginDate,endDate)
+    return(df)
     
 }
 
