@@ -33,7 +33,7 @@ fetchTXData <- function(rawData) {
 formatTXData <- function(dataList,beginDate,endDate) {
     data_tests <- dataList$data_tests
     data_tests_2 <- dataList$data_tests_2
-    data_case <- dataList$data_case
+    data_cases <- dataList$data_cases
 
     find_date =  function(x){ gsub("Tests Through ", "", x) }
 
