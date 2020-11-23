@@ -62,13 +62,14 @@ formatWIData <- function(df,beginDate,endDate) {
         select(name:test_new) %>% 
         mutate(date = ymd_hms(date))
 
-    if (!is.null(beginDate) {
+    if (!is.null(beginDate)) {
         df <- df %>%
             filter(date >= beginDate)
     }
-    if (!is.null(endDate) {
+    if (!is.null(endDate)) {
         df <- df %>%
-            filter(date <= endDate)
+            ## include cases from before midnight of endDate
+            filter(date < endDate+1)
     }
 
     df <- df %>%
@@ -92,13 +93,13 @@ formatNYData <- function(df,beginDate,endDate) {
                positive = as.numeric(cumulative_number_of_positives)) %>% 
         mutate(date = as.Date(ymd_hms(test_date)))
 
-    if (!is.null(beginDate) {
+    if (!is.null(beginDate)) {
         df <- df %>%
             filter(date >= beginDate)
     }
-    if (!is.null(endDate) {
+    if (!is.null(endDate)) {
         df <- df %>%
-            filter(date <= endDate)
+            filter(date < endDate+1)
     }
 
     
