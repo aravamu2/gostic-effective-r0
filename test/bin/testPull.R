@@ -35,6 +35,12 @@ if (args$state == "NY") {
                        as.Date(args$endDate)
                        )
 
+} else if (args$state == "TX") {
+    df <- formatTXData(raw,
+                       as.Date(args$beginDate),
+                       as.Date(args$endDate)
+                       )
+
 }
 
 write.csv(df, args$outFile, row.names = FALSE, quote = FALSE)

@@ -128,8 +128,13 @@ pullData <- function(state,rawData = NULL,beginDate,endDate) {
         df <- formatNYData(df_raw,beginDate,endDate)
         return(df)
     }
-    
-    
+
+    if (state == "TX") {
+        df_raw <- fetchTXData(rawData)
+        df <- formatTXData(df_raw,beginDate,endDate)
+        return(df)
+    }
+
     
 }
 
