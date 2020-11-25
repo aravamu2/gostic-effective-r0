@@ -2,8 +2,9 @@
 universe = docker
 
 ###########################
-STATE = WI
-NCOUNTIES = 72
+STATE = TX
+### Texas has 254 counties, but Loving is excluded due to too few cases
+NCOUNTIES = 253
 ###########################
 
 epiVersion = 1.0.0

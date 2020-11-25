@@ -2,8 +2,8 @@
 universe = docker
 
 ###########################
-STATE = WI
-NCOUNTIES = 72
+STATE = NY
+NCOUNTIES = 62
 ###########################
 
 epiVersion = 1.0.0
