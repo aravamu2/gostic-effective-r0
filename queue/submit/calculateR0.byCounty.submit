@@ -43,8 +43,8 @@ request_cpus  = $(CPUS)
 request_gpus = isUndefined(TotalGpus) ? 0 : 1  
 
 ## These jobs took 11 and 12 hrs
-STATE = WI
-queue origPROCID in 13,27
+#STATE = WI
+#queue origPROCID in 13,27
 
 # This job took 16 hrs
 STATE = NY
@@ -52,4 +52,5 @@ queue origPROCID  in 23
 
 ## Jobs 8 hrs or longer
 STATE = TX
-queue origPROCID  in 43,58,194,110,155,197,176
+#queue origPROCID  in 43,58,194,110,155,197,176
+queue origPROCID  in 58
