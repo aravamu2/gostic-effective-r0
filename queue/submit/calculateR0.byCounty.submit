@@ -1,0 +1,55 @@
+### condor_submit -append CPUS=2 -append CHAINS=2 ..
+universe = docker
+###################
+# redo some counties that took the longest times in the first run
+#
+###########################
+
+
+epiVersion = 1.0.0
+epiTag     = github
+docker_image = steveg53703/epinow2:$(epiTag).$(epiVersion)
+
+executable = Rscript
+transfer_executable = false
++WantFlocking = TRUE
+
+## enforce execute node architecture compatibility with docker image
+Requirements = (Has_sse4_2 =?= true)  
+
+countyIndex = $(origPROCID) + 1
+
+DATE = 2020-10-11
+INFILE = data/processed/$(STATE)_$(DATE).csv
+OUTFILE = $(STATE)_R0.$(DATE).$(CLUSTER).$(origPROCID).csv
+
+args = --vanilla calculateR0.R  -inFile $BASENAME(INFILE) -outFile $(OUTFILE) -chains $(CHAINS) -cores $(CPUS) -countyIndex $INT(countyIndex)
+
+transfer_input_files = bin/calculateR0.R, $(INFILE)
+transfer_output_remaps = "$(OUTFILE) = outdir/$(OUTFILE)"
+
+output    = queue/out/$(STATE)_R0.$(CLUSTER).$(origPROCID).out
+error  = queue/err/$(STATE)_R0.$(CLUSTER).$(origPROCID).err
+log    = queue/log/$(STATE)_R0.$(CLUSTER).log
+
+## defaults  (override with -append on the cmd line.)
+CHAINS = 2
+CPUS = 2
+
+request_memory = 3 GB
+request_disk  =  1 GB
+request_cpus  = $(CPUS)
+## avoid eviction on researcher gpu nodes
+request_gpus = isUndefined(TotalGpus) ? 0 : 1  
+
+## These jobs took 11 and 12 hrs
+STATE = WI
+queue origPROCID in 13,27
+
+# This job took 16 hrs
+STATE = NY
+queue origPROCID  in 23
+
+## Jobs 8 hrs or longer
+STATE = TX
+queue origPROCID  in 43,58,194,110,155,197,176
