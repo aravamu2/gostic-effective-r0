@@ -15,6 +15,7 @@ defaultArgs <- list (
     inFile = "test/input/wiFetch.rds",
     beginDate = NULL,
     endDate   = NULL,
+    excludeCounties = NULL,
     outFile = "test/output/wiPull.csv"
 )
 
@@ -43,9 +44,17 @@ if (args$state == "NY") {
                        )
 
 } else if (args$state == "TX") {
+    if (!is.null(args$excludeCounties)) {
+       excludeCounties <- eval(parse(text = args$excludeCounties))
+       }	       
+       else {
+       excludeCounties <- NULL
+       }
+       excludeCounties
     df <- formatTXData(raw,
                        args$beginDate,
-                       args$endDate
+                       args$endDate,
+		       excludeCounties = excludeCounties
                        )
 
 }

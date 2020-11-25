@@ -30,7 +30,7 @@ fetchTXData <- function(rawData) {
 
 ## data tests
 
-formatTXData <- function(dataList,beginDate,endDate) {
+formatTXData <- function(dataList,beginDate,endDate,excludeCounties=NULL) {
     data_tests <- dataList$data_tests
     data_tests_2 <- dataList$data_tests_2
     data_cases <- dataList$data_cases
@@ -133,6 +133,14 @@ formatTXData <- function(dataList,beginDate,endDate) {
             filter(date < endDate+1)
     }
 
+    ## remove counties with too few cases
+    ## hack: first run the code and compile list of failures;
+    ##  then use CL arg -excludeCounties 'c("Loving")'
+    if (!is.null(excludeCounties)) {
+       df_TX <- df_TX %>%
+       	  filter(!(name %in% excludeCounties))
+    }
+	      	
     df_TX <- df_TX %>% mutate(tests = as.numeric(tests),
                               confirm = as.numeric(confirm)) %>% 
         clean_names() %>%
