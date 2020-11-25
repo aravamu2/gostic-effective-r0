@@ -1,0 +1,9 @@
+cluster=8851272
+for i in {0..71}; do cat outdir/*.$cluster.$i.csv; done|perl -nale 'if ($.==1) {print; next} next if /^name/; print' > results/2020-10-11/WI_R0.2020-10-11.$cluster.csv
+
+########
+
+ cluster=8851273
+for i in {0..61}; do cat outdir/*.$cluster.$i.csv; done|perl -nale 'if ($.==1) {print; next} next if /^name/; print' > results/2020-10-11/NY_R0.2020-10-11.$cluster.csv
+
+########################
