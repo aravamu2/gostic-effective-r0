@@ -1,0 +1,2 @@
+
+Rscript --vanilla test/bin/testPull.R -state $state -inFile data/raw/$state.2020-11-22.rds -endDate 2020-10-11 -outFile data/processed/$state.2020-10-11.csv -excludeCounties 'c("Loving")' 1> $state.1.out 2> $state.1.err &
