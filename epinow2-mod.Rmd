@@ -1,0 +1,179 @@
+---
+title: "Reported Cases and Effective $R_t$: EpiNow2 Workflow"
+author: "Srikanth Aravamuthan"
+date: "3/19/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(lubridate)
+library(janitor)
+library(EpiNow2)
+library(future)
+library(zoo)
+
+set.seed(1)
+
+```
+
+```{r}
+date.of.interest <- as.character(Sys.Date())
+horizon <- 7
+
+```
+
+```{r}
+df.herc <- 
+  read.csv("HERC_Regions_data.csv", fileEncoding="UTF-8-BOM", stringsAsFactors = FALSE) %>% 
+  clean_names()
+
+df.dhs <- 
+  read.csv("https://opendata.arcgis.com/datasets/5374188992374b318d3e2305216ee413_12.csv", fileEncoding="UTF-8-BOM", stringsAsFactors = FALSE) %>% 
+  clean_names()
+
+```
+
+```{r}
+region_names <- c("Northwest", "North Central", "Northeast", "Western", "South Central", "Fox Valley", "Southeast")
+names(region_names) <- 1:length(region_names)
+region_names <- 
+  enframe(region_names) %>% 
+  dplyr::select(2:1) %>% 
+  deframe()
+
+df.herc <- 
+  df.herc %>% 
+  dplyr::select(county_name:herc_regions) %>% 
+  rename(county = county_name,
+         region = herc_regions) %>% 
+  mutate(county = ifelse(county == "Saint Croix", "St. Croix", county),
+         region = recode(as.character(region), !!!region_names))
+
+df.dhs <- 
+  df.dhs %>% 
+  janitor::clean_names() %>% 
+  mutate(date = lubridate::date(date))
+
+```
+
+
+
+```{r}
+fun_pos_lag <- function(x) {
+  y <- ifelse(x == -999, max(x, na.rm = TRUE), x)
+  y <- ifelse(y == -999, 0, y)
+  z <- rev(cummin(rev(y)))
+  z - lag(z, default = first(z))
+}
+
+fun_case_corr <- function(x, y) {
+  x*y
+}
+
+start_time <- Sys.time()
+
+df <- 
+  df.herc %>% 
+  right_join(df.dhs, by = c("county" = "name")) %>% 
+  group_by(county) %>% 
+  arrange(date) %>% 
+  mutate_at(vars(pos_0_9:pos_90, positive, negative), list(new = fun_pos_lag)) %>% 
+  mutate(pos_0_19 = pos_0_9 + pos_10_19,
+         pos_0_19_new = pos_0_9_new + pos_10_19_new,
+         pos_80_plus = pos_80_89 + pos_90,
+         pos_80_plus_new = pos_80_89_new + pos_90_new) %>% 
+  mutate(test_new = positive_new + negative_new,
+         test_new = zoo::na.fill(test_new, "extend"),
+         pos_rate = positive_new / test_new,
+         pos_rate = zoo::na.fill(pos_rate, "extend")) %>% 
+  nest() %>% 
+  mutate(pos_rate_gam = purrr::map(data, function(df) fitted(mgcv::gam(pos_rate ~ s(as.numeric(date)), data = df, family = "quasibinomial", weights = test_new)))) %>%
+  unnest(cols = c(data, pos_rate_gam)) %>% 
+  group_by(date) %>% 
+  mutate(case_corr = (pos_rate_gam/quantile(pos_rate_gam, probs = 0.025, na.rm = TRUE))^0.1) %>% 
+  mutate_at(vars(pos_0_19_new, pos_20_29_new:pos_70_79_new, pos_80_plus_new), ~fun_case_corr(., y = case_corr)) %>% 
+  ungroup() %>% 
+  dplyr::select(county, region, date, pos_0_19_new, pos_20_29_new:pos_70_79_new, pos_80_plus_new) %>% 
+  pivot_longer(pos_0_19_new:pos_80_plus_new, 
+               names_to = "name_age",
+               values_to = "value") %>% 
+  tidyr::extract("name_age", c("name", "age"), "([^_]+)_(.*)$") %>% 
+  mutate(name = recode(name, admit = "hosp", pos = "case"),
+         age = str_remove(age, "_new")) %>% 
+  pivot_wider(names_from = "name",
+              values_from = "value")
+
+end_time <- Sys.time()
+end_time - start_time
+
+```
+
+```{r}
+future::plan("multiprocess", workers=7)
+
+set.seed(1)
+
+reporting_delay <- estimate_delay(rlnorm(100, log(6), 1),
+                                  max_value = 30, 
+                                  bootstraps = 1)
+
+generation_time <- get_generation_time(disease = "SARS-CoV-2", 
+                                       source = "ganyani", 
+                                       max_value = 30)
+incubation_period <- get_incubation_period(disease = "SARS-CoV-2", 
+                                           source = "lauer", 
+                                           max_value = 30)
+
+```
+
+```{r}
+start_time <- Sys.time()
+
+df.epinow <- 
+  df %>% 
+  group_by(region, age, date) %>% 
+  summarize_at(vars(case), sum, na.rm = TRUE) %>% 
+  ungroup() %>% 
+  group_by(region, age) %>% 
+  dplyr::select(date, case) %>%
+  transmute(date = as.Date(date),
+            confirm = round(case)) %>% 
+  filter(date <= as.Date(date.of.interest)) %>% 
+  slice((n()-27):n()) %>% 
+  nest() %>% 
+  mutate(
+    estimate = list(
+      EpiNow2::epinow(
+        reported_cases = as.data.frame(data),
+        generation_time = generation_time,
+        delays = delay_opts(incubation_period, reporting_delay),
+        stan = stan_opts(samples = 1000, 
+                         warmup = 200, 
+                         cores = 8, 
+                         chains = 2),
+        horizon = horizon,
+        verbose = TRUE 
+      )$estimates$summarised
+    )
+  ) %>% 
+  dplyr::select(-data) %>% 
+  unnest(estimate) %>% 
+  ungroup()
+
+end_time <- Sys.time()
+end_time - start_time
+
+```
+
+```{r}
+df.epinow %>% 
+  filter(variable %in% c("R", "reported_cases")) %>% 
+  write_csv("epinow2_mod.csv")
+
+save(df.epinow, file = "epinow2_mod.RData")
+
+```
+
