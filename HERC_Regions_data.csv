@@ -1,0 +1,73 @@
+﻿County Name,HERC Regions,Region,Geometry,Latitude (generated),Longitude (generated)
+Vernon,Western,*,Polygon,43.562365893,-91.063997840
+Trempealeau,Western,*,Polygon,44.155129148,-91.466658854
+Monroe,Western,*,Polygon,44.042516755,-90.799059147
+La Crosse,Western,*,Polygon,43.982487551,-91.264139945
+Jackson,Western,*,Polygon,44.262218865,-90.917809812
+Crawford,Western,*,Polygon,43.145490004,-90.972017501
+Buffalo,Western,*,Polygon,44.227269113,-91.684412941
+Waukesha,Southeast,*,Polygon,43.017376203,-88.311206530
+Washington,Southeast,*,Polygon,43.369152155,-88.211958333
+Walworth,Southeast,*,Polygon,42.566735125,-88.551828926
+Sheboygan,Southeast,*,Polygon,43.715627227,-87.748110919
+Racine,Southeast,*,Polygon,42.748686587,-87.826749004
+Ozaukee,Southeast,*,Polygon,43.323030395,-87.883100548
+Milwaukee,Southeast,*,MultiPolygon,43.029929034,-87.871434418
+Kenosha,Southeast,*,MultiPolygon,42.560688766,-87.875483020
+Fond du Lac,Southeast,*,Polygon,43.765134088,-88.560367287
+Sauk,South Central,*,Polygon,43.349960897,-89.847664348
+Rock,South Central,*,Polygon,42.572316802,-89.095809955
+Richland,South Central,*,Polygon,43.224758007,-90.439130405
+Marquette,South Central,*,Polygon,43.799971265,-89.261256225
+Lafayette,South Central,*,Polygon,42.642036991,-90.135707044
+Juneau,South Central,*,Polygon,43.972918405,-89.946443047
+Jefferson,South Central,*,Polygon,43.023535016,-88.769917446
+Iowa,South Central,*,Polygon,43.119388908,-90.131398977
+Green,South Central,*,Polygon,42.603883465,-89.582256522
+Grant,South Central,*,Polygon,42.945457366,-90.843172423
+Dodge,South Central,*,Polygon,43.446715936,-88.744968366
+Dane,South Central,*,Polygon,43.169481926,-89.615531552
+Columbia,South Central,*,Polygon,43.507726312,-89.605909075
+Adams,South Central,*,Polygon,43.976519086,-89.914825857
+Washburn,Northwest,*,Polygon,45.856762923,-91.778906675
+Sawyer,Northwest,*,Polygon,45.882544458,-91.159266796
+Saint Croix,Northwest,*,Polygon,45.045938880,-92.654559244
+Rusk,Northwest,*,Polygon,45.464597800,-91.137841174
+Polk,Northwest,*,Polygon,45.450323437,-92.681709594
+Pierce,Northwest,*,Polygon,44.641975426,-92.543647477
+Pepin,Northwest,*,Polygon,44.518660400,-92.080768985
+Eau Claire,Northwest,*,Polygon,44.719191609,-91.266712217
+Dunn,Northwest,*,Polygon,44.950172877,-91.898875730
+Douglas,Northwest,*,Polygon,46.682390923,-91.849949661
+Chippewa,Northwest,*,Polygon,45.033329610,-91.300071784
+Burnett,Northwest,*,Polygon,45.893308711,-92.576507011
+Bayfield,Northwest,*,MultiPolygon,46.831806435,-91.004806942
+Barron,Northwest,*,Polygon,45.441717789,-91.829283353
+Ashland,Northwest,*,MultiPolygon,46.863895012,-90.658669290
+Oconto,Northeast,*,MultiPolygon,44.855371956,-87.932908685
+Marinette,Northeast,*,MultiPolygon,45.250348885,-87.732626091
+Manitowoc,Northeast,*,Polygon,44.156022797,-87.590318443
+Kewaunee,Northeast,*,Polygon,44.537293966,-87.507540209
+Florence,Northeast,*,Polygon,45.939472649,-88.331010335
+Door,Northeast,*,MultiPolygon,45.092832938,-87.184440794
+Brown,Northeast,*,MultiPolygon,44.599884592,-87.974705679
+Wood,North Central,*,Polygon,44.430028287,-90.026520100
+Vilas,North Central,*,Polygon,46.036531706,-89.451133926
+Taylor,North Central,*,Polygon,45.220427688,-90.517333368
+Price,North Central,*,Polygon,45.712449229,-90.365124762
+Portage,North Central,*,Polygon,44.437212095,-89.506174131
+Oneida,North Central,*,Polygon,45.751165994,-89.450041154
+Marathon,North Central,*,Polygon,44.935559389,-89.752232107
+Lincoln,North Central,*,Polygon,45.330404300,-89.737981393
+Langlade,North Central,*,Polygon,45.221643762,-88.987373549
+Iron,North Central,*,Polygon,46.456898017,-90.251292089
+Forest,North Central,*,Polygon,45.962003051,-88.777091990
+Clark,North Central,*,Polygon,44.731176568,-90.661579103
+Winnebago,Fox Valley,*,Polygon,44.085424441,-88.696728350
+Waushara,Fox Valley,*,Polygon,44.110671444,-89.192771674
+Waupaca,Fox Valley,*,Polygon,44.445992243,-88.944835952
+Shawano,Fox Valley,*,Polygon,44.764598304,-88.643853210
+Outagamie,Fox Valley,*,Polygon,44.407299371,-88.366484745
+Menominee,Fox Valley,*,Polygon,45.026838194,-88.717639616
+Green Lake,Fox Valley,*,Polygon,43.795905414,-89.092585396
+Calumet,Fox Valley,*,Polygon,44.055898749,-88.199006342
