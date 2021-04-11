@@ -1,0 +1,170 @@
+---
+title: "Reported Cases and Effective $R_t$: County, HERC Region, and State"
+author: "Srikanth Aravamuthan"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  # cache = TRUE, 
+  message = FALSE,
+  warning = FALSE 
+)
+
+library(tidyverse)
+library(lubridate)
+library(janitor)
+library(EpiNow2)
+library(future)
+library(zoo)
+library(purrr)
+library(mgcv)
+
+set.seed(1)
+
+```
+
+
+
+```{r}
+date.of.interest <- as.character(Sys.Date())
+horizon <- 7
+
+```
+
+
+
+```{r}
+df.herc <- 
+  read.csv("HERC_Regions_data.csv", fileEncoding="UTF-8-BOM", stringsAsFactors = FALSE) %>% 
+  clean_names()
+
+df.dhs <- 
+  read.csv("https://opendata.arcgis.com/datasets/5374188992374b318d3e2305216ee413_12.csv", fileEncoding="UTF-8-BOM", stringsAsFactors = FALSE) %>% 
+  clean_names()
+
+```
+
+```{r}
+df.herc <- 
+  df.herc %>% 
+  dplyr::select(county_name:herc_regions) %>% 
+  rename(county = county_name,
+         region = herc_regions) %>% 
+  mutate(county = ifelse(county == "Saint Croix", "St. Croix", county))
+
+df.dhs <- 
+  df.dhs %>% 
+  janitor::clean_names() %>% 
+  mutate(date = lubridate::date(date))
+
+```
+
+
+
+```{r}
+df <- 
+  df.herc %>% 
+  right_join(df.dhs, by = c("county" = "name")) %>% 
+  dplyr::select(county, region, geo, date, positive, negative) %>% 
+  group_by(county, region, geo) %>% 
+  arrange(desc(date)) %>% 
+  mutate(positive = cummin(positive),
+         negative = cummin(negative)) %>% 
+  arrange(date) %>% 
+  mutate(pos_new = positive - lag(positive, 1, 0),
+         neg_new = negative - lag(negative, 1, 0)) %>% 
+  mutate(tests = positive + negative,
+         test_new = pos_new + neg_new,
+         test_new = zoo::na.fill(test_new, "extend"),
+         pos_rate = pos_new / test_new,
+         pos_rate = zoo::na.fill(pos_rate, "extend"),
+         pos_rate = ifelse(is.nan(pos_rate), 0, pos_rate)) %>% 
+  nest() %>% 
+  mutate(pos_rate_gam = purrr::map(data, function(df) fitted(mgcv::gam(pos_rate ~ s(as.numeric(date)), data = df, family = "quasibinomial", weights = test_new)))) %>% 
+  unnest(cols = c(data, pos_rate_gam)) %>% 
+  group_by(date) %>% 
+  mutate(case = pos_new * (pos_rate_gam/quantile(pos_rate_gam, probs = 0.025, na.rm = TRUE))^0.1) %>% 
+  ungroup() %>% 
+  dplyr::select(county, region, geo, date, pos_new) %>% 
+  rename(case = pos_new)
+
+```
+
+
+
+```{r}
+future::plan("multiprocess", workers=7)
+
+set.seed(1)
+
+reporting_delay <- estimate_delay(rlnorm(100, log(6), 1),
+                                  max_value = 30, 
+                                  bootstraps = 1)
+
+generation_time <- get_generation_time(disease = "SARS-CoV-2", 
+                                       source = "ganyani", 
+                                       max_value = 30)
+incubation_period <- get_incubation_period(disease = "SARS-CoV-2", 
+                                           source = "lauer", 
+                                           max_value = 30)
+
+```
+
+```{r}
+df.epinow <- 
+  df %>% 
+  dplyr::select(-region) %>% 
+  rename(name = county) %>% 
+  bind_rows(
+    df %>% 
+      group_by(region, date) %>% 
+      summarize_at(vars(case), sum, na.rm = TRUE) %>% 
+      ungroup() %>% 
+      mutate(geo = "HERC Region") %>% 
+      rename(name = region) %>% 
+      dplyr::select(name, geo, everything())
+  ) %>% 
+  bind_rows(
+    df %>% 
+      group_by(date) %>% 
+      summarize_at(vars(case), sum, na.rm = TRUE) %>% 
+      ungroup() %>% 
+      mutate(name = "Wisconsin",
+             geo = "State") %>% 
+      dplyr::select(name, geo, everything())
+  ) %>% 
+  group_by(name, geo) %>% 
+  dplyr::select(date, case) %>%
+  transmute(date = as.Date(date),
+            confirm = round(case)) %>% 
+  filter(date <= as.Date(date.of.interest)) %>% 
+  slice((n()-27):n()) %>% 
+  filter(sum(confirm, na.rm = TRUE) >= 10) %>% 
+  nest() %>% 
+  mutate(
+    estimate = list(
+      EpiNow2::epinow(
+        reported_cases = as.data.frame(data),
+        generation_time = generation_time,
+        delays = delay_opts(incubation_period, reporting_delay),
+        stan = stan_opts(samples = 1000, 
+                         warmup = 200, 
+                         cores = 8, 
+                         chains = 2),
+        horizon = horizon,
+        verbose = TRUE 
+      )$estimates$summarised
+    )
+  ) %>% 
+  dplyr::select(-data) %>% 
+  unnest(estimate) %>% 
+  ungroup()
+
+df.epinow <- 
+  df.epinow %>% 
+  filter(variable %in% c("R", "reported_cases"))
+
+```
+
